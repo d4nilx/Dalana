@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dalana", "Dalana.csproj", "{54E1A998-0F8B-4AFD-92DD-2EF1F0959DDC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{54E1A998-0F8B-4AFD-92DD-2EF1F0959DDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54E1A998-0F8B-4AFD-92DD-2EF1F0959DDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54E1A998-0F8B-4AFD-92DD-2EF1F0959DDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54E1A998-0F8B-4AFD-92DD-2EF1F0959DDC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

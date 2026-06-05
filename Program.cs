@@ -2,12 +2,15 @@
 using System.Text;
 using Dalana.Models;
 using Spectre.Console;
+using Dalana.Services;
 
 string apiUrl = "http://localhost:11434/api/generate";
 
 using HttpClient httpClient = new HttpClient();
 
 Console.WriteLine("🟢 AI-core activated write 'exit' to turn off tool\n");
+
+SystemController.OpenSmart("");
 
 while (true)
 {

@@ -18,13 +18,15 @@ if (string.IsNullOrEmpty(groqApiKey))
 string apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {groqApiKey}");
 
-List<ChatMessage> conversationHistory = new List<ChatMessage>();
+List<ChatMessage> conversationHistory = MemoryService.LoadHistory();
 
-conversationHistory.Add(new ChatMessage
+if (conversationHistory.Count == 0)
 {
-    Role = "system",
-    Content = @"You are Dalana, a strict macOS CLI system controller and intelligent assistant.
-You MUST respond ONLY with a valid JSON object. NEVER ask follow-up questions. NEVER explain anything outside JSON.
+    conversationHistory.Add(new ChatMessage
+    {
+        Role = "system",
+        Content = @"You are Dalana, a strict macOS CLI system controller and intelligent assistant.
+You MUST respond ONLY with a valid JSON object. You can ask follow-up questions ONLY in conversation. NEVER explain anything outside JSON.
 
 Rules:
 1. Action 'open': use ONLY for websites, URLs, or Google searches. Format: { ""action"": ""open"", ""value"": ""<target>"" }
@@ -37,7 +39,10 @@ User: 'open booking site' -> { ""action"": ""open"", ""value"": ""booking.com"" 
 User: 'open app Calculator' -> { ""action"": ""open_app"", ""value"": ""Calculator"" }
 User: 'launch rider' -> { ""action"": ""open_app"", ""value"": ""Rider"" }
 User: 'what is async await' -> { ""action"": ""chat"", ""value"": ""async/await is..."" }"
-});
+    });
+
+    MemoryService.SaveHistory(conversationHistory);
+}
 
 Console.Clear();
 AnsiConsole.Write(
@@ -156,6 +161,6 @@ while (true)
             Console.WriteLine(message.Content);
         }
     }
-
+    MemoryService.SaveHistory(conversationHistory);
     Console.WriteLine();
 }

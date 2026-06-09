@@ -1,16 +1,17 @@
 # 🤖 Dalana
 
-> A local AI assistant CLI that runs entirely on your Mac — no cloud, no API keys, no internet required.
+> A blazing fast macOS CLI AI assistant and system agent powered by the Groq API.
 
-Dalana talks to a locally running [Ollama](https://ollama.com) instance and gives you AI responses directly in your terminal. Built for developers who want a fast, private, and extensible AI tool they actually own.
+Dalana is an intelligent, context-aware assistant that lives in your terminal. It doesn't just chat — it acts as a system agent capable of opening URLs, launching macOS applications, writing code, creating files, and smartly routing them to the right IDEs (like Rider or VS Code). Built for developers who want maximum terminal productivity.
 
 ---
 
 ## Why Dalana?
 
-- **100% local** — powered by Llama 3 via Ollama, everything stays on your machine
-- **No subscriptions** — free forever, no rate limits
-- **Extensible** — built to grow into a full developer agent (file editing, app launching, browser automation)
+- **Blazing Fast** — powered by the `llama-3.3-70b-versatile` model via Groq API for near-instant responses.
+- **System-Aware** — native macOS integration to control files and apps.
+- **Smart Routing** — knows to open `.cs` files in Rider, `.py` in VS Code, and standard text in TextEdit.
+- **Persistent Memory** — remembers your conversation context across different terminal sessions.
 
 ---
 
@@ -18,80 +19,87 @@ Dalana talks to a locally running [Ollama](https://ollama.com) instance and give
 
 - macOS (Apple Silicon recommended)
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Ollama](https://ollama.com) installed and running
-- Llama 3 model pulled: `ollama pull llama3`
+- A free API key from [Groq](https://console.groq.com/keys)
 
 ---
 
 ## Installation
 
 ```bash
-git clone https://github.com/d4nilx/Dalana.git
+# Clone the repository
+git clone [https://github.com/d4nilx/Dalana.git](https://github.com/d4nilx/Dalana.git)
 cd Dalana
-dotnet run
-```
 
-Make sure Ollama is running before you start:
-```bash
-ollama serve
+# Set up your environment variables
+echo "GROQ_API_KEY=your_api_key_here" > .env
+
+# Run the application
+dotnet run
 ```
 
 ---
 
 ## Usage
 
+Just launch the app and start typing. Dalana understands natural language intents and translates them into system actions.
+
 ```bash
 dotnet run
 ```
 
-```
-What's your request today?: explain what async/await does in C#
-Sending your request...
-
-Answer:
-async/await is a pattern that allows you to write asynchronous code
-that looks and behaves like synchronous code...
-```
+**Examples of what you can ask:**
+- *"youtube"* ➔ Opens youtube.com in your default browser.
+- *"launch rider"* ➔ Opens JetBrains Rider.
+- *"write a C# script to sum two numbers"* ➔ Generates `Program.cs` and opens it in Rider.
+- *"open script.py in VS Code"* ➔ Finds the file and opens it in your specified editor.
+- *"explain async/await"* ➔ Explains it directly in the CLI chat.
 
 ---
 
 ## Project Structure
 
-```
+```text
 Dalana/
-├── Program.cs
+├── Program.cs              ← Main loop, Groq API integration & Spectre.Console UI
+├── .env                    ← Your local API keys (gitignored)
 ├── Models/
-│   ├── OllamaRequest.cs    ← request payload sent to Ollama
-│   └── OllamaResponse.cs   ← parsed response from Ollama
+│   ├── GroqRequest.cs      ← Request payload for the LLM
+│   ├── GroqResponse.cs     ← Parsed API response
+│   ├── GroqActions.cs      ← Structured JSON schema for function calling
+│   └── ChatMessage.cs      ← Message history model
 └── Services/
-    └── OllamaService.cs    ← (coming soon) HTTP client logic
+    ├── SystemController.cs ← macOS system execution, smart file routing
+    └── MemoryService.cs    ← Handles local chat history storage
 ```
 
 ---
 
 ## Roadmap
 
-- [x] Basic Ollama API communication
+- [x] Basic API communication (migrated to Groq)
 - [x] JSON serialization / deserialization
-- [ ] Spectre.Console UI with spinner and chat loop
-- [ ] System controller — open apps and URLs via `Process.Start`
-- [ ] Function calling — AI returns structured JSON actions
-- [ ] File manipulation — read and rewrite code files via AI
-- [ ] AppleScript automation — simulate keyboard input
+- [x] Spectre.Console UI with spinner and chat loop
+- [x] Persistent local memory/history
+- [x] System controller — open apps and URLs via `Process.Start`
+- [x] Function calling — AI returns structured JSON actions
+- [x] File manipulation — create, edit, and open files with smart IDE routing
+- [ ] Automated email drafting via macOS protocols
+- [ ] AppleScript automation — simulate deeper system controls
 
 ---
 
 ## Tech Stack
 
-- **C# / .NET 10** — console app with `HttpClient` and `System.Text.Json`
-- **Ollama** — local LLM runtime
-- **Llama 3** — default model
+- **C# / .NET 10** — core application
+- **Spectre.Console** — beautiful CLI rendering
+- **DotNetEnv** — environment variable management
+- **Groq API (`gpt-oss-120b`)** — LLM backend for instant structured JSON output
 
 ---
 
 ## Status
 
-🚧 Early development — Phase 1 complete (AI core), Phase 2 in progress.
+🚧 Active development — Phase 3 (System Agent & File Management) complete. Moving to Phase 4 (Deep macOS Integrations).
 
 ---
 

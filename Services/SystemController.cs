@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Spectre.Console;
 
 namespace Dalana.Services;
 
@@ -42,13 +43,6 @@ public class SystemController
         {
             OpenUrl($"https://{cleanQuery}");
         }
-        
-        else if (cleanQuery.Contains("."))
-        {
-            string domain = cleanQuery.Replace(" ", "");
-            OpenUrl($"https://{domain}.com");
-            Console.WriteLine($"[System] Opening: https://{domain}.com");
-        }
         else
         {
             string encoded = Uri.EscapeDataString(query);
@@ -67,5 +61,74 @@ public class SystemController
             Arguments = $"-a \"{resolvedName}\"",
             UseShellExecute = true,
         });
+    }
+    
+    public static string FormatUrl(string query)
+    {
+        string cleanQuery = query.ToLower().Trim();
+
+        if (cleanQuery.StartsWith("http://") || cleanQuery.StartsWith("https://")) return cleanQuery;
+        if (cleanQuery.Contains(".")) return $"https://{cleanQuery}";
+        
+        string domain = cleanQuery.Replace(" ", ""); 
+        return $"https://{domain}.com";
+    }
+    
+    public static void CreateFileAndOpen(string fileName, string fileContent, string? requestedApp = null)
+    {
+        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        string filePath = Path.Combine(desktop, fileName);
+
+        string cleanContent = fileContent
+            .Replace("\\n", "\n")
+            .Replace("\\t", "\t");
+        
+        File.WriteAllText(filePath, cleanContent);
+
+        string targetApp = requestedApp ?? "";
+
+        if (string.IsNullOrEmpty(targetApp))
+        {
+            string extension = Path.GetExtension(fileName).ToLower();
+            targetApp = extension switch
+            {
+                ".cs" => "Rider",
+                ".py" => "Visual Studio Code", 
+                ".txt" or ".md" or ".json" => "TextEdit",
+                ".html" or ".css" => "Google Chrome",
+                _ => "" 
+            };
+        }
+
+        string arguments = string.IsNullOrEmpty(targetApp) 
+            ? $"\"{filePath}\"" 
+            : $"-a \"{targetApp}\" \"{filePath}\"";
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "open",
+            Arguments = arguments,
+            UseShellExecute = true
+        });
+    }
+    
+    public static void OpenFile(string fileName)
+    {
+        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        string filePath = Path.Combine(desktop, fileName);
+
+        if (File.Exists(filePath))
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "open",
+                Arguments = $"\"{filePath}\"",
+                UseShellExecute = true
+            });
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[bold red]File not found:[/] {fileName}");
+        }
     }
 }

@@ -14,7 +14,7 @@ public class AgentLogicTests
         string aiResponse = @"{ ""action"": ""open_app"", ""value"": ""Calculator"" }";
 
         // 2. Act 
-        LlamaAction? result = JsonSerializer.Deserialize<LlamaAction>(aiResponse);
+        GroqAction? result = JsonSerializer.Deserialize<GroqAction>(aiResponse);
 
         // 3. Assert 
         Assert.NotNull(result);
@@ -29,7 +29,7 @@ public class AgentLogicTests
         string aiResponse = @"{ ""action"": ""chat"", ""value"": ""async/await is used for asynchronous programming."" }";
 
         // 2. Act 
-        LlamaAction? result = JsonSerializer.Deserialize<LlamaAction>(aiResponse);
+        GroqAction? result = JsonSerializer.Deserialize<GroqAction>(aiResponse);
 
         // 3. Assert 
         Assert.NotNull(result);

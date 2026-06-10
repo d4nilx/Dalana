@@ -2,14 +2,14 @@
 
 > A blazing fast macOS CLI AI assistant and system agent powered by the Groq API.
 
-Dalana is an intelligent, context-aware assistant that lives in your terminal. It doesn't just chat — it acts as a system agent capable of opening URLs, launching macOS applications, writing code, creating files, and smartly routing them to the right IDEs (like Rider or VS Code). Built for developers who want maximum terminal productivity.
+Dalana is an intelligent, context-aware assistant that lives in your terminal. It doesn't just chat — it acts as a system agent capable of opening URLs, launching macOS applications, writing code, creating files, smartly routing them to the right IDEs, and drafting emails. Built for developers who want maximum terminal productivity.
 
 ---
 
 ## Why Dalana?
 
-- **Blazing Fast** — powered by the `llama-3.3-70b-versatile` model via Groq API for near-instant responses.
-- **System-Aware** — native macOS integration to control files and apps.
+- **Blazing Fast** — powered by the `openai/gpt-oss-120b` model via Groq API for near-instant responses.
+- **System-Aware** — native macOS integration to control files, apps, and communication.
 - **Smart Routing** — knows to open `.cs` files in Rider, `.py` in VS Code, and standard text in TextEdit.
 - **Persistent Memory** — remembers your conversation context across different terminal sessions.
 
@@ -52,6 +52,7 @@ dotnet run
 - *"launch rider"* ➔ Opens JetBrains Rider.
 - *"write a C# script to sum two numbers"* ➔ Generates `Program.cs` and opens it in Rider.
 - *"open script.py in VS Code"* ➔ Finds the file and opens it in your specified editor.
+- *"draft an email to prof@wsb.pl saying I'll be late for the C# lecture"* ➔ Auto-generates a professional email and opens it in your default mail app (e.g., Spark/Apple Mail) ready to send.
 - *"explain async/await"* ➔ Explains it directly in the CLI chat.
 
 ---
@@ -68,7 +69,7 @@ Dalana/
 │   ├── GroqActions.cs      ← Structured JSON schema for function calling
 │   └── ChatMessage.cs      ← Message history model
 └── Services/
-    ├── SystemController.cs ← macOS system execution, smart file routing
+    ├── SystemController.cs ← macOS system execution, smart file routing, email protocols
     └── MemoryService.cs    ← Handles local chat history storage
 ```
 
@@ -83,8 +84,9 @@ Dalana/
 - [x] System controller — open apps and URLs via `Process.Start`
 - [x] Function calling — AI returns structured JSON actions
 - [x] File manipulation — create, edit, and open files with smart IDE routing
-- [ ] Automated email drafting via macOS protocols
+- [x] Automated email drafting via macOS protocols
 - [ ] AppleScript automation — simulate deeper system controls
+- [ ] Read and analyze local file contents
 
 ---
 
@@ -93,7 +95,7 @@ Dalana/
 - **C# / .NET 10** — core application
 - **Spectre.Console** — beautiful CLI rendering
 - **DotNetEnv** — environment variable management
-- **Groq API (`gpt-oss-120b`)** — LLM backend for instant structured JSON output
+- **Groq API (`openai/gpt-oss-120b`)** — LLM backend for instant structured JSON output
 
 ---
 

@@ -15,4 +15,13 @@ public class GroqAction
     
     [JsonPropertyName("target_app")]
     public string? TargetApp { get; set; }
+    
+    [JsonPropertyName("to")]
+    public string? To { get; set; }
+
+    [JsonPropertyName("subject")]
+    public string? Subject { get; set; }
+
+    [JsonPropertyName("body")]
+    public string? Body { get; set; }
 }

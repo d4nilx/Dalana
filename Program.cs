@@ -33,7 +33,8 @@ Rules:
 2. Action 'open_app': use ONLY for launching local macOS applications. Format: { ""action"": ""open_app"", ""value"": ""<app_name>"" }
 3. Action 'chat': use ONLY for general questions, advice, ideas, conversations. Format: { ""action"": ""chat"", ""value"": ""<your_answer>"" }
 4. Action 'create_file': use to generate files. You MUST include 'target_app' IF the user specifically asks to open it in a certain program (like PyCharm, Rider, Word). Format: { """"action"""": """"create_file"""", """"value"""": """"<file_name>"""", """"content"""": """"<code_or_text>"""", """"target_app"""": """"<app_name>"" }
-5. Action 'open_file': use ONLY to open existing local files. Format: { """"action"""": """"open_file"""", """"value"""": """"<file_name_with_extension>"""" }
+5. Action 'open_file': use ONLY to open existing local files. Format: { """"action"""": """"open_file"""", """"value"""": """"<file_name_with_extension>""}
+6. Action 'draft_email': use to write an email. You MUST generate the professional or appropriate body and subject based on user request. Format: { """"action"""": """"draft_email"""", """"to"""": """"<email_address>"""", """"subject"""": """"<generated_subject>"""", """"body"""": """"<generated_body>"""" }
 
 CRITICAL EXAMPLES TO FOLLOW:
 User: 'youtube' -> { """"action"""": """"open"""", """"value"""": """"youtube.com"""" }
@@ -43,17 +44,36 @@ User: 'open booking site' -> { ""action"": ""open"", ""value"": ""booking.com"" 
 User: 'open app Calculator' -> { ""action"": ""open_app"", ""value"": ""Calculator"" }
 User: 'launch rider' -> { ""action"": ""open_app"", ""value"": ""Rider"" }
 User: 'open grocery_list.txt' -> { """"action"""": """"open_file"""", """"value"""": """"grocery_list.txt"""" }
-User: 'what is async await' -> { ""action"": ""chat"", ""value"": ""async/await is..."" }"
+User: 'what is async await' -> { ""action"": ""chat"", ""value"": ""async/await is..."" }
+User: 'email boss@work.com that I am sick' -> { """"action"""": """"draft_email"""", """"to"""": """"boss@work.com"""", """"subject"""": """"Sick Leave Today"""", """"body"""": """"Dear Boss,\n\nI am feeling unwell today and will not be able to attend work.\n\nBest regards,"""" }"
     });
 
     MemoryService.SaveHistory(conversationHistory);
 }
 
 Console.Clear();
-AnsiConsole.Write(
-    new FigletText("DALANA")
-        .LeftJustified()
-        .Color(Color.SpringGreen3));
+
+string startupWord = "DALANA";
+string currentStartupText = "";
+
+AnsiConsole.Live(new FigletText("").LeftJustified().Color(Color.SpringGreen3))
+    .Start(ctx => 
+    {
+        foreach (char letter in startupWord)
+        {
+            currentStartupText += letter;
+            
+            ctx.UpdateTarget(
+                new FigletText(currentStartupText)
+                    .LeftJustified()
+                    .Color(Color.SpringGreen3)
+            );
+            
+            Thread.Sleep(50); 
+        }
+    });
+Thread.Sleep(300); 
+
 AnsiConsole.MarkupLine(" [grey]AI-Core [bold green]ONLINE[/]. Type [bold red]exit[/] to shut down.[/]\n");
 AnsiConsole.Write(new Rule().RuleStyle("grey"));
 Console.WriteLine();
@@ -70,7 +90,24 @@ while (true)
     {
         Console.WriteLine();
         AnsiConsole.Write(new Rule("[red]System Shutdown[/]").RuleStyle("grey").Centered());
-        AnsiConsole.Write(new FigletText("OFFLINE").Centered().Color(Color.Red));
+    
+        string targetWord = "OFFLINE";
+        string currentText = "";
+
+        AnsiConsole.Live(new FigletText("").Centered().Color(Color.Red))
+            .Start(ctx => 
+            {
+                foreach (char letter in targetWord)
+                {
+                    currentText += letter; 
+                
+                    ctx.UpdateTarget(new FigletText(currentText).Centered().Color(Color.Red));
+                
+                    Thread.Sleep(50); 
+                }
+            });
+
+        Thread.Sleep(300); 
         break;
     }
 
@@ -85,7 +122,7 @@ while (true)
 
     GroqRequest requestData = new GroqRequest
     {
-        Model = "llama-3.3-70b-versatile",
+        Model = "openai/gpt-oss-120b",
         Messages = conversationHistory,
         Stream = false
     };
@@ -185,6 +222,16 @@ while (true)
                     AnsiConsole.Write(table);
                     
                     SystemController.CreateFileAndOpen(actionData.Value, actionData.Content ?? "", actionData.TargetApp);
+                }
+                else if (actionData.Action == "draft_email")
+                {
+                    var table = new Table().Border(TableBorder.Rounded).BorderColor(Color.Blue);
+                    table.AddColumn("[bold blue]📧 Email Draft[/]");
+                    table.AddRow($"To: [green]{Markup.Escape(actionData.To ?? "")}[/]");
+                    table.AddRow($"Subject: [yellow]{Markup.Escape(actionData.Subject ?? "")}[/]");
+                    AnsiConsole.Write(table);
+                    
+                    SystemController.DraftEmail(actionData.To ?? "", actionData.Subject ?? "", actionData.Body ?? "");
                 }
             }
         }

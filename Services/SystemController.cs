@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Spectre.Console;
 using System.IO;
+using System.Web;
 
 namespace Dalana.Services;
 
@@ -101,6 +102,12 @@ public class SystemController
     {
         string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         string filePath = Path.Combine(desktop, fileName);
+        
+        string? directoryPath = Path.GetDirectoryName(filePath);
+        if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
 
         string cleanContent = fileContent
             .Replace("\\n", "\n")
@@ -161,5 +168,68 @@ public class SystemController
             Arguments = $"\"{mailtoUrl}\"",
             UseShellExecute = true
         });
+    }
+    
+    private static string GetWorkspacePath()
+    {
+        string? envPath = Environment.GetEnvironmentVariable("DALANA_WORKSPACE");
+
+        if (!string.IsNullOrEmpty(envPath) && Directory.Exists(envPath))
+        {
+            return envPath;
+        }
+
+        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        string defaultWorkspace = Path.Combine(desktop, "DalanaWorkspace");
+
+        if (!Directory.Exists(defaultWorkspace))
+        {
+            Directory.CreateDirectory(defaultWorkspace);
+        }
+
+        return defaultWorkspace;
+    }
+
+    public static string ReadSafeFile(string fileName)
+    {
+        string sandboxPath = GetWorkspacePath();
+
+        string requestedPath = Path.GetFullPath(Path.Combine(sandboxPath, fileName));
+
+        if (!requestedPath.StartsWith(sandboxPath))
+        {
+            AnsiConsole.MarkupLine("[bold red]🚨 Not happening!! AI does not have path here!![/]");
+            return "[SECURITY ERROR] Access Denied. You are strictly confined to the workspace directory!!!!";
+        }
+
+        if (!File.Exists(requestedPath))
+        {
+            return $"[ERROR] File not found in workspace: {fileName}";
+        }
+
+        return File.ReadAllText(requestedPath);
+    }
+    
+    public static void SendEmailReal(string to, string subject, string body)
+    {
+        try
+        {
+            string encodedSubject = Uri.EscapeDataString(subject);
+            string encodedBody = Uri.EscapeDataString(body);
+
+            string mailtoUrl = $"mailto:{to}?subject={encodedSubject}&body={encodedBody}";
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "open",
+                Arguments = $"\"{mailtoUrl}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SECURITY ERROR] Failed to open Mail app: {ex.Message}");
+        }
     }
 }

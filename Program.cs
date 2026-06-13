@@ -20,36 +20,48 @@ httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {groqApiKey}");
 
 List<ChatMessage> conversationHistory = MemoryService.LoadHistory();
 
-if (conversationHistory.Count == 0)
-{
+// if (conversationHistory.Count == 0)
+// {
+    conversationHistory.Clear();
     conversationHistory.Add(new ChatMessage
     {
         Role = "system",
         Content = @"You are Dalana, a strict macOS CLI system controller and intelligent assistant.
-You MUST respond ONLY with a valid JSON object. You can ask follow-up questions ONLY in conversation. NEVER explain anything outside JSON.
+You MUST respond ONLY with a valid JSON object. NEVER explain anything outside JSON.
 
-Rules:
-1. Action 'open': use ONLY for websites, URLs, or Google searches. Format: { ""action"": ""open"", ""value"": ""<target>"" }
-2. Action 'open_app': use ONLY for launching local macOS applications. Format: { ""action"": ""open_app"", ""value"": ""<app_name>"" }
-3. Action 'chat': use ONLY for general questions, advice, ideas, conversations. Format: { ""action"": ""chat"", ""value"": ""<your_answer>"" }
-4. Action 'create_file': use to generate files. You MUST include 'target_app' IF the user specifically asks to open it in a certain program (like PyCharm, Rider, Word). Format: { """"action"""": """"create_file"""", """"value"""": """"<file_name>"""", """"content"""": """"<code_or_text>"""", """"target_app"""": """"<app_name>"" }
-5. Action 'open_file': use ONLY to open existing local files. Format: { """"action"""": """"open_file"""", """"value"""": """"<file_name_with_extension>""}
-6. Action 'draft_email': use to write an email. You MUST generate the professional or appropriate body and subject based on user request. Format: { """"action"""": """"draft_email"""", """"to"""": """"<email_address>"""", """"subject"""": """"<generated_subject>"""", """"body"""": """"<generated_body>"""" }
+Your JSON must strictly match this format:
+{
+  ""thought"": ""<briefly explain your logic>"",
+  ""actions"": [
+    { ""action"": ""<action_type>"", ""value"": ""<target>"" }
+  ]
+}
 
-CRITICAL EXAMPLES TO FOLLOW:
-User: 'youtube' -> { """"action"""": """"open"""", """"value"""": """"youtube.com"""" }
-ser: 'write python script and open in PyCharm' -> { """"action"""": """"create_file"""", """"value"""": """"script.py"""", """"content"""": """"print(1)"""", """"target_app"""": """"PyCharm"""" }
-User: 'create a text document' -> { """"action"""": """"create_file"""", """"value"""": """"doc.txt"""", """"content"""": """"hello"""", """"target_app"""": """""""" }
-User: 'open booking site' -> { ""action"": ""open"", ""value"": ""booking.com"" }
-User: 'open app Calculator' -> { ""action"": ""open_app"", ""value"": ""Calculator"" }
-User: 'launch rider' -> { ""action"": ""open_app"", ""value"": ""Rider"" }
-User: 'open grocery_list.txt' -> { """"action"""": """"open_file"""", """"value"""": """"grocery_list.txt"""" }
-User: 'what is async await' -> { ""action"": ""chat"", ""value"": ""async/await is..."" }
-User: 'email boss@work.com that I am sick' -> { """"action"""": """"draft_email"""", """"to"""": """"boss@work.com"""", """"subject"""": """"Sick Leave Today"""", """"body"""": """"Dear Boss,\n\nI am feeling unwell today and will not be able to attend work.\n\nBest regards,"""" }"
+Rules for actions:
+1. 'open': ONLY for websites/URLs. Format: { ""action"": ""open"", ""value"": ""<target>"" }
+2. 'open_app': ONLY for launching macOS apps. Format: { ""action"": ""open_app"", ""value"": ""<app_name>"" }
+3. 'chat': for general answers/advice. Format: { ""action"": ""chat"", ""value"": ""<your_answer>"" }
+4. 'create_file': include 'target_app' IF asked to open. Format: { ""action"": ""create_file"", ""value"": ""<file_name>"", ""content"": ""<text>"", ""target_app"": ""<app_name>"" }
+5. 'open_file': ONLY to open existing files. Format: { ""action"": ""open_file"", ""value"": ""<file_name>"" }
+6. 'draft_email': Format: { ""action"": ""draft_email"", ""to"": ""<email>"", ""subject"": ""<subject>"", ""body"": ""<body>"" }
+7. 'read_file': Format: { ""action"": ""read_file"", ""value"": ""<file_name>"" }
+8. Action 'preview_email': Use this only when you user want to send email AND you have all the necessary information (recipient email, name, context). Format: { ""action"": ""preview_email"", ""to"": ""<email>"", ""subject"": ""<subject>"", ""body"": ""<body>"" }
+9. Action 'save_memory': Use this to save important user data for the future (like a professor's email or a friend's contact). Format: { ""action"": ""save_memory"", ""value"": ""Prof. Kowalski's email is kowalski@wsb.pl"" }
+
+CRITICAL EXAMPLES:
+User: 'open youtube and Calculator' -> 
+{
+  ""thought"": ""User wants to open a website and a local app."",
+  ""actions"": [
+    { ""action"": ""open"", ""value"": ""youtube.com"" },
+    { ""action"": ""open_app"", ""value"": ""Calculator"" }
+  ]
+}
+CRITICAL EMAIL RULE: If the user asks to send an email but you DO NOT know the recipient's email address or name, YOU MUST NOT use 'preview_email'. Instead, use the 'chat' action to ask the user for the missing details. Once the user provides them, first use 'save_memory' to remember the contact, and then use 'preview_email'."
     });
 
     MemoryService.SaveHistory(conversationHistory);
-}
+// }
 
 Console.Clear();
 
@@ -171,67 +183,93 @@ while (true)
             if (start >= 0 && end > start)
                 cleanJson = cleanJson.Substring(start, end - start + 1);
 
-            GroqAction? actionData = JsonSerializer.Deserialize<GroqAction>(cleanJson);
+            DalanaResponse? responseData = JsonSerializer.Deserialize<DalanaResponse>(cleanJson);
 
-            if (actionData != null)
+            if (responseData != null)
             {
-                if (actionData.Action == "open")
+                if (responseData.Actions != null)
                 {
-                    var table = new Table().Border(TableBorder.Rounded).BorderColor(Color.Green);
-                    table.AddColumn("[bold green]🛠 System Execution[/]");
-                    table.AddRow($"Opening target: [yellow]{Markup.Escape(actionData.Value)}[/]");
-                    AnsiConsole.Write(table);
-                    
-                    SystemController.OpenSmart(actionData.Value);
-                }
-                else if (actionData.Action == "open_app") 
-                {
-                    var table = new Table().Border(TableBorder.Rounded).BorderColor(Color.Purple);
-                    table.AddColumn("[bold purple]🚀 App Launcher[/]");
-                    table.AddRow($"Starting application: [yellow]{Markup.Escape(actionData.Value)}[/]");
-                    AnsiConsole.Write(table);
-                    
-                    SystemController.OpenApp(actionData.Value);
-                }
-                else if (actionData.Action == "open_file")
-                {
-                    var table = new Table().Border(TableBorder.Rounded).BorderColor(Color.Yellow);
-                    table.AddColumn("[bold yellow]📂 File Opener[/]");
-                    table.AddRow($"Opening file: [green]{Markup.Escape(actionData.Value)}[/]");
-                    AnsiConsole.Write(table);
-                    
-                    SystemController.OpenFile(actionData.Value);
-                }
-                else if (actionData.Action == "chat")
-                {
-                    var panel = new Panel(Markup.Escape(actionData.Value))
+                    foreach (var actionData in responseData.Actions)
                     {
-                        Border = BoxBorder.Rounded,
-                        Padding = new Padding(1, 1, 1, 1),
-                        // BorderColor = Color.Blue
-                    };
-                    panel.Header("[blue]Dalana AI[/]");
-                    AnsiConsole.Write(panel);
-                }
-                else if (actionData.Action == "create_file")
-                {
-                    var table = new Table().Border(TableBorder.Rounded).BorderColor(Color.Orange1);
-                    table.AddColumn("[bold orange1]📄 File Generator[/]");
-                    table.AddRow($"Creating file: [yellow]{Markup.Escape(actionData.Value)}[/]");
-                    table.AddRow($"Writing [green]{actionData.Content?.Length ?? 0}[/] characters...");
-                    AnsiConsole.Write(table);
-                    
-                    SystemController.CreateFileAndOpen(actionData.Value, actionData.Content ?? "", actionData.TargetApp);
-                }
-                else if (actionData.Action == "draft_email")
-                {
-                    var table = new Table().Border(TableBorder.Rounded).BorderColor(Color.Blue);
-                    table.AddColumn("[bold blue]📧 Email Draft[/]");
-                    table.AddRow($"To: [green]{Markup.Escape(actionData.To ?? "")}[/]");
-                    table.AddRow($"Subject: [yellow]{Markup.Escape(actionData.Subject ?? "")}[/]");
-                    AnsiConsole.Write(table);
-                    
-                    SystemController.DraftEmail(actionData.To ?? "", actionData.Subject ?? "", actionData.Body ?? "");
+                        if (actionData.Action == "open")
+                        {
+                            SystemController.OpenSmart(actionData.Value);
+                        }
+                        else if (actionData.Action == "open_app")
+                        {
+                            SystemController.OpenApp(actionData.Value);
+                        }
+                        else if (actionData.Action == "open_file")
+                        {
+                            SystemController.OpenFile(actionData.Value);
+                        }
+                        else if (actionData.Action == "chat")
+                        {
+                            AnsiConsole.MarkupLine($"[bold blue]Dalana:[/] {Markup.Escape(actionData.Value)}");
+                        }
+                        else if (actionData.Action == "create_file")
+                        {
+                            SystemController.CreateFileAndOpen(actionData.Value, actionData.Content ?? "",
+                                actionData.TargetApp);
+                            AnsiConsole.MarkupLine($"[green]✅ File created:[/] {Markup.Escape(actionData.Value)}");
+                        }
+                        else if (actionData.Action == "draft_email")
+                        {
+                            SystemController.DraftEmail(actionData.To ?? "", actionData.Subject ?? "",
+                                actionData.Body ?? "");
+                            AnsiConsole.MarkupLine(
+                                $"[green]✅ Email drafted to:[/] {Markup.Escape(actionData.To ?? "")}");
+                        }
+                        else if (actionData.Action == "save_memory")
+                        {
+                            File.AppendAllText("memory.txt", actionData.Value + Environment.NewLine);
+                            AnsiConsole.MarkupLine($"[dim green] Memory updated:[/] {Markup.Escape(actionData.Value)}");
+                        }
+                        else if (actionData.Action == "preview_email")
+                        {
+                            var emailPanel =
+                                new Panel(
+                                    $"[bold]To:[/] {Markup.Escape(actionData.To ?? "")}\n[bold]Subject:[/] {Markup.Escape(actionData.Subject ?? "")}\n\n{Markup.Escape(actionData.Body ?? "")}")
+                                {
+                                    Header = new PanelHeader("[blue]📧 Email Draft Preview[/]"),
+                                    Padding = new Padding(1, 1, 1, 1),
+                                    Border = BoxBorder.Rounded
+                                };
+                            AnsiConsole.Write(emailPanel);
+
+                            if (AnsiConsole.Confirm($"[bold red] You sure you want to send this email?[/]"))
+                            {
+                                SystemController.SendEmailReal(actionData.To ?? "", actionData.Subject ?? "", actionData.Body ?? "");
+                                AnsiConsole.MarkupLine("[bold green]✅ Mail sent![/]");
+                            }
+                            else
+                            {
+                                AnsiConsole.MarkupLine($"[yellow] Sending canceled. [/]");
+                            }
+                        }
+                        else if (actionData.Action == "read_file")
+                        {
+                            string fileContent = SystemController.ReadSafeFile(actionData.Value);
+
+                            if (fileContent.StartsWith("[SECURITY ERROR]") || fileContent.StartsWith("[ERROR]"))
+                            {
+                                AnsiConsole.MarkupLine($"[bold red]{Markup.Escape(fileContent)}[/]");
+                            }
+                            else
+                            {
+                                var fileContextMessage = new ChatMessage
+                                {
+                                    Role = "user",
+                                    Content =
+                                        $"[SYSTEM INJECTION] Here is the content of the file '{actionData.Value}':\n\n```\n{fileContent}\n```\n\nPlease acknowledge you read it and answer my previous request about this file."
+                                };
+                                conversationHistory.Add(fileContextMessage);
+
+                                AnsiConsole.MarkupLine(
+                                    $"[dim green]File {Markup.Escape(actionData.Value)} loaded into memory.[/]");
+                            }
+                        }
+                    }
                 }
             }
         }

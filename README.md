@@ -1,108 +1,104 @@
 # 🤖 Dalana
 
-> A blazing fast macOS CLI AI assistant and system agent powered by the Groq API.
+> A blazing fast, hybrid macOS CLI system agent powered by Groq API and local Ollama.
 
-Dalana is an intelligent, context-aware assistant that lives in your terminal. It doesn't just chat — it acts as a system agent capable of opening URLs, launching macOS applications, writing code, creating files, smartly routing them to the right IDEs, and drafting emails. Built for developers who want maximum terminal productivity.
+Dalana is an intelligent, context-aware assistant that lives in your terminal. It doesn't just chat — it acts as a system agent capable of opening URLs, launching macOS applications, writing code, reading files, and drafting emails.
 
----
-
-## Why Dalana?
-
-- **Blazing Fast** — powered by the `openai/gpt-oss-120b` model via Groq API for near-instant responses.
-- **System-Aware** — native macOS integration to control files, apps, and communication.
-- **Smart Routing** — knows to open `.cs` files in Rider, `.py` in VS Code, and standard text in TextEdit.
-- **Persistent Memory** — remembers your conversation context across different terminal sessions.
+Built with a **Hybrid AI Routing** architecture, Dalana dynamically switches between a lightning-fast local LLM (for simple system tasks) and a powerful cloud model (for complex generation) to save resources and ensure maximum privacy.
 
 ---
 
-## Requirements
+## ✨ Key Features
 
-- macOS (Apple Silicon recommended)
+- 🧠 **Hybrid AI Routing** — Automatically routes complex tasks (coding, email drafting) to **Groq API** and simple tasks (opening apps, creating files) to a local **Ollama** model.
+- ⚡ **Blazing Fast** — Built on .NET 10 with asynchronous execution.
+- 💻 **System-Aware** — Native macOS integration to control files, apps, and communication.
+- 📂 **Smart File Handling** — Creates files, opens existing ones, and can read file contents securely into its context.
+- 📧 **Human-in-the-Loop Emails** — Drafts professional emails, saves unknown contacts to persistent memory, and requests interactive `[y/n]` user confirmation before securely opening the macOS Mail app.
+- 💾 **Persistent Memory** — Remembers conversation context, contacts, and user facts across different terminal sessions.
+
+---
+
+## 🛠️ Requirements
+
+- macOS (Apple Silicon M-series highly recommended)
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Ollama](https://ollama.com/) installed and running locally.
 - A free API key from [Groq](https://console.groq.com/keys)
 
 ---
 
-## Installation
+## 🚀 Installation
 
-```bash
-# Clone the repository
-git clone [https://github.com/d4nilx/Dalana.git](https://github.com/d4nilx/Dalana.git)
+git clone https://github.com/d4nilx/Dalana.git
 cd Dalana
 
-# Set up your environment variables
 echo "GROQ_API_KEY=your_api_key_here" > .env
 
-# Run the application
+ollama run llama3
+
 dotnet run
-```
 
 ---
 
-## Usage
+## 💡 Usage
 
-Just launch the app and start typing. Dalana understands natural language intents and translates them into system actions.
+Launch the app and start typing naturally. Dalana parses your intent and executes structured JSON actions under the hood.
 
-```bash
 dotnet run
-```
 
-**Examples of what you can ask:**
-- *"youtube"* ➔ Opens youtube.com in your default browser.
-- *"launch rider"* ➔ Opens JetBrains Rider.
-- *"write a C# script to sum two numbers"* ➔ Generates `Program.cs` and opens it in Rider.
-- *"open script.py in VS Code"* ➔ Finds the file and opens it in your specified editor.
-- *"draft an email to prof@wsb.pl saying I'll be late for the C# lecture"* ➔ Auto-generates a professional email and opens it in your default mail app (e.g., Spark/Apple Mail) ready to send.
-- *"explain async/await"* ➔ Explains it directly in the CLI chat.
+**Example Scenarios:**
+- *"youtube"* ➔ Quickly opens youtube.com using the local model.
+- *"launch rider"* ➔ Opens JetBrains Rider locally.
+- *"write a C# script to sum two numbers"* ➔ Routes to Groq, generates code, saves it to a file, and opens it.
+- *"read index.html and find bugs"* ➔ Reads local file contents directly into the AI's context.
+- *"email professor Kowalski that I'll be late"* ➔ AI checks memory for the email, drafts a message, shows a preview, and asks for your permission before executing the `mailto:` protocol.
 
 ---
 
-## Project Structure
+## 🏗️ Project Architecture
+
+Dalana uses a modular structure with a focus on separation of concerns:
 
 ```text
 Dalana/
-├── Program.cs              ← Main loop, Groq API integration & Spectre.Console UI
+├── Program.cs              ← Main loop, Hybrid AI Router & Spectre.Console UI
 ├── .env                    ← Your local API keys (gitignored)
+├── memory.txt              ← Persistent contact and fact storage
 ├── Models/
-│   ├── GroqRequest.cs      ← Request payload for the LLM
-│   ├── GroqResponse.cs     ← Parsed API response
-│   ├── GroqActions.cs      ← Structured JSON schema for function calling
+│   ├── DalanaResponse.cs   ← Universal JSON schema handling Chain-of-Thought
+│   ├── GroqAction.cs       ← Action definitions (open, create_file, preview_email, etc.)
+│   ├── GroqRequest.cs      ← Request payload for the cloud LLM
+│   ├── GroqResponse.cs     ← Parsed API response from Groq
 │   └── ChatMessage.cs      ← Message history model
 └── Services/
-    ├── SystemController.cs ← macOS system execution, smart file routing, email protocols
-    └── MemoryService.cs    ← Handles local chat history storage
+    ├── OllamaService.cs    ← Handles local LLM requests ensuring strict JSON format
+    ├── SystemController.cs ← macOS system execution, file handling, and email protocols
+    └── MemoryService.cs    ← Handles chat history serialization
 ```
-
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
 - [x] Basic API communication (migrated to Groq)
-- [x] JSON serialization / deserialization
-- [x] Spectre.Console UI with spinner and chat loop
-- [x] Persistent local memory/history
-- [x] System controller — open apps and URLs via `Process.Start`
-- [x] Function calling — AI returns structured JSON actions
-- [x] File manipulation — create, edit, and open files with smart IDE routing
-- [x] Automated email drafting via macOS protocols
-- [ ] AppleScript automation — simulate deeper system controls
-- [ ] Read and analyze local file contents
+- [x] Spectre.Console UI with animated spinners
+- [x] Function calling — AI returns structured JSON actions (`Chain-of-Thought` pattern)
+- [x] **Phase 3:** System controller — app launching and smart file creation
+- [x] **Phase 4:** Human-in-the-loop email drafting and persistent contact memory
+- [x] **Phase 5:** Hybrid AI Routing (Groq Cloud + Ollama Local)
+- [ ] **Phase 6:** Telegram Bot integration for remote macOS control
+- [ ] Playwright integration for automated web scraping/booking
 
 ---
 
-## Tech Stack
+## 💻 Tech Stack
 
-- **C# / .NET 10** — core application
-- **Spectre.Console** — beautiful CLI rendering
-- **DotNetEnv** — environment variable management
-- **Groq API (`openai/gpt-oss-120b`)** — LLM backend for instant structured JSON output
-
----
-
-## Status
-
-🚧 Active development — Phase 3 (System Agent & File Management) complete. Moving to Phase 4 (Deep macOS Integrations).
+- **C# / .NET 10** — Core application
+- **Spectre.Console** — Beautiful, interactive CLI rendering
+- **DotNetEnv** — Environment variable management
+- **Groq API (`openai/gpt-oss-120b`)** — Cloud backend for heavy reasoning
+- **Ollama (`llama3`)** — Local backend for fast, offline system commands
 
 ---
 
-*Built by [Daniil Zhdanov / @d4nilx](https://github.com/d4nilx)*
+*Built by [Daniil Zhdanov / @d4nilx](https://github.com/d4nilx) | DevOps & .NET Enthusiast*
